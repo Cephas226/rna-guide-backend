@@ -1,0 +1,377 @@
+// ============================================================
+// RNA Guide - Schéma Prisma Complet
+// PostgreSQL (Neon) + PostGIS pour géospatial
+// ============================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum Role {
+  PRODUCTEUR
+  AGENT_TERRAIN
+  SUPERVISEUR
+  ADMIN
+}
+
+enum SyncStatus {
+  SYNCED
+  PENDING
+  CONFLICT
+  DELETED
+}
+
+enum ProductType {
+  FEUILLES
+  FRUITS
+  FLEURS
+  GOUSSES
+  ECORCES
+  BOIS
+  COMBUSTIBLE
+}
+
+enum HealthState {
+  BON
+  MOYEN
+  MAUVAIS
+}
+
+enum Season {
+  HIVERNAGE
+  SAISON_SECHE
+}
+
+enum ConflictResolution {
+  CLIENT_WINS
+  SERVER_WINS
+  MANUAL
+}
+
+enum SyncAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// ─────────────────────────────────────────
+// UTILISATEURS & AUTH
+// ─────────────────────────────────────────
+
+model User {
+  id            String   @id @default(uuid())
+  email         String?  @unique
+  phone         String?  @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          Role     @default(PRODUCTEUR)
+  region        String?
+  province      String?
+  commune       String?
+  village       String?
+  avatarUrl     String?
+  isActive      Boolean  @default(true)
+  lastLoginAt   DateTime?
+  lastSyncAt    DateTime?
+  deviceId      String?
+  deviceModel   String?
+  appVersion    String?
+
+  // Relations
+  refreshTokens  RefreshToken[]
+  ownedParcels   Parcel[]       @relation("ParcelOwner")
+  inventories    Inventory[]
+  photos         Photo[]
+  exploitations  Exploitation[]
+  syncLogs       SyncLog[]
+  resetTokens    PasswordReset[]
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([role, region])
+  @@index([email])
+  @@index([phone])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("password_resets")
+}
+
+// ─────────────────────────────────────────
+// PARCELLES RNA
+// ─────────────────────────────────────────
+
+model Parcel {
+  id          String     @id @default(uuid())
+  localId     String?    @unique // UUID généré offline sur le mobile
+  name        String
+  region      String
+  province    String
+  commune     String
+  village     String
+  superficie  Float      // en hectares
+  latitude    Float
+  longitude   Float
+  geometry    Json?      // GeoJSON polygon des points GPS
+  gpsPoints   Json?      // Array de {lat, lng} pour délimiter la parcelle
+  ownerId     String
+  owner       User       @relation("ParcelOwner", fields: [ownerId], references: [id])
+  syncStatus  SyncStatus @default(SYNCED)
+  version     Int        @default(1)
+  notes       String?
+
+  // Relations
+  inventories   Inventory[]
+  photos        Photo[]
+  exploitations Exploitation[]
+  photoPoints   PhotoPoint[]
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([region, province])
+  @@index([ownerId])
+  @@index([localId])
+  @@index([syncStatus])
+  @@map("parcels")
+}
+
+model PhotoPoint {
+  id        String  @id @default(uuid())
+  parcelId  String
+  parcel    Parcel  @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  name      String  // "Point Nord-Est", "Centre parcelle"
+  latitude  Float
+  longitude Float
+  photos    Photo[]
+  createdAt DateTime @default(now())
+
+  @@index([parcelId])
+  @@map("photo_points")
+}
+
+// ─────────────────────────────────────────
+// PHOTOS DE SUIVI
+// ─────────────────────────────────────────
+
+model Photo {
+  id           String      @id @default(uuid())
+  localId      String?     @unique
+  parcelId     String
+  parcel       Parcel      @relation(fields: [parcelId], references: [id])
+  authorId     String
+  author       User        @relation(fields: [authorId], references: [id])
+  photoPointId String?
+  photoPoint   PhotoPoint? @relation(fields: [photoPointId], references: [id])
+  storageUrl   String
+  thumbnailUrl String?
+  originalName String?
+  sizeBytes    Int?
+  mimeType     String      @default("image/jpeg")
+  latitude     Float?
+  longitude    Float?
+  altitude     Float?
+  takenAt      DateTime
+  syncStatus   SyncStatus  @default(PENDING)
+  localPath    String?     // chemin local sur le téléphone
+  notes        String?
+  year         Int?        // pour comparaison avant/après
+  createdAt    DateTime    @default(now())
+
+  @@index([parcelId, takenAt])
+  @@index([authorId])
+  @@index([syncStatus])
+  @@map("photos")
+}
+
+// ─────────────────────────────────────────
+// INVENTAIRE RNA
+// ─────────────────────────────────────────
+
+model Species {
+  id               String             @id @default(uuid())
+  scientificName   String             @unique
+  localNameFr      String?
+  localNameMoore   String?
+  localNameDioula  String?
+  localNameFulfule String?
+  commonName       String?
+  category         String             // "arbre" | "arbuste" | "liane"
+  isNative         Boolean            @default(true)
+  ecologicalRole   String?
+  usageDescription String?
+  imageUrl         String?
+  inventorySpecies InventorySpecies[]
+  createdAt        DateTime           @default(now())
+
+  @@map("species")
+}
+
+model Inventory {
+  id           String     @id @default(uuid())
+  localId      String?    @unique
+  parcelId     String
+  parcel       Parcel     @relation(fields: [parcelId], references: [id])
+  agentId      String
+  agent        User       @relation(fields: [agentId], references: [id])
+  year         Int
+  season       Season
+  totalPieds   Int        @default(0)
+  selectedPieds Int       @default(0) // pieds RNA sélectionnés
+  syncStatus   SyncStatus @default(SYNCED)
+  version      Int        @default(1)
+  observations String?
+  validatedAt  DateTime?
+  validatedBy  String?
+  species      InventorySpecies[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([parcelId, year, season])
+  @@index([parcelId, year])
+  @@index([agentId])
+  @@map("inventories")
+}
+
+model InventorySpecies {
+  id            String      @id @default(uuid())
+  inventoryId   String
+  inventory     Inventory   @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  speciesId     String
+  species       Species     @relation(fields: [speciesId], references: [id])
+  totalPieds    Int
+  selectedPieds Int         // pieds sélectionnés RNA
+  healthState   HealthState @default(BON)
+  heightCm      Float?      // hauteur moyenne en cm
+  notes         String?
+  isNewSpecies  Boolean     @default(false) // espèce nouvellement observée
+
+  @@unique([inventoryId, speciesId])
+  @@map("inventory_species")
+}
+
+// ─────────────────────────────────────────
+// EXPLOITATION DES PRODUITS
+// ─────────────────────────────────────────
+
+model Exploitation {
+  id          String      @id @default(uuid())
+  localId     String?     @unique
+  parcelId    String
+  parcel      Parcel      @relation(fields: [parcelId], references: [id])
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  productType ProductType
+  quantity    Float
+  unit        String      // "kg" | "fagot" | "sac" | "litre" | "botte"
+  destination String      // "autoconsommation" | "vente" | "don" | "stockage"
+  usage       String?     // "nourriture" | "medecine" | "fourrage" | "bois_chauffe"
+  priceXOF    Float?      // prix en FCFA si vendu
+  buyerInfo   String?     // nom acheteur si vente
+  exploitedAt DateTime
+  syncStatus  SyncStatus  @default(SYNCED)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([parcelId, exploitedAt])
+  @@index([productType])
+  @@map("exploitations")
+}
+
+// ─────────────────────────────────────────
+// FORMATIONS & GUIDES
+// ─────────────────────────────────────────
+
+model Formation {
+  id              String   @id @default(uuid())
+  titleFr         String
+  titleMoore      String?
+  titleDioula     String?
+  titleFulfule    String?
+  contentFr       String
+  contentMoore    String?
+  contentDioula   String?
+  contentFulfule  String?
+  category        String   // "technique_rna" | "botanique" | "economique" | "entretien"
+  subcategory     String?
+  mediaUrls       Json     @default("[]") // [{type: "image|audio|video", url, caption}]
+  tags            String[] @default([])
+  isPublished     Boolean  @default(false)
+  orderIndex      Int      @default(0)
+  viewCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category, isPublished])
+  @@map("formations")
+}
+
+// ─────────────────────────────────────────
+// SYNCHRONISATION OFFLINE
+// ─────────────────────────────────────────
+
+model SyncLog {
+  id           String              @id @default(uuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id])
+  deviceId     String
+  entityType   String              // "parcel" | "inventory" | "photo" | "exploitation"
+  entityId     String              // id côté serveur
+  localId      String?             // id côté client
+  action       SyncAction
+  payload      Json                // données envoyées
+  conflictWith Json?               // données serveur en cas de conflit
+  resolution   ConflictResolution?
+  errorMessage String?
+  syncedAt     DateTime            @default(now())
+
+  @@index([userId, syncedAt])
+  @@index([entityType, entityId])
+  @@index([deviceId])
+  @@map("sync_logs")
+}
