@@ -60,6 +60,11 @@ enum SyncAction {
   DELETE
 }
 
+enum RnaCategory {
+  ENTRETIEN
+  CES_DRS
+}
+
 // ─────────────────────────────────────────
 // UTILISATEURS & AUTH
 // ─────────────────────────────────────────
@@ -92,6 +97,7 @@ model User {
   exploitations  Exploitation[]
   syncLogs       SyncLog[]
   resetTokens    PasswordReset[]
+  rnaOperations  RnaOperation[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -161,6 +167,7 @@ model Parcel {
   photos        Photo[]
   exploitations Exploitation[]
   photoPoints   PhotoPoint[]
+  rnaOperations RnaOperation[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -315,6 +322,31 @@ model Exploitation {
   @@index([parcelId, exploitedAt])
   @@index([productType])
   @@map("exploitations")
+}
+
+// ─────────────────────────────────────────
+// OPÉRATIONS RNA (entretien + CES/DRS)
+// ─────────────────────────────────────────
+
+model RnaOperation {
+  id            String      @id @default(uuid())
+  localId       String?     @unique
+  parcelId      String
+  parcel        Parcel      @relation(fields: [parcelId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  category      RnaCategory
+  operationType String
+  month         Int
+  year          Int
+  notes         String?
+  syncStatus    SyncStatus  @default(SYNCED)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([parcelId])
+  @@index([userId])
+  @@map("rna_operations")
 }
 
 // ─────────────────────────────────────────
