@@ -14,6 +14,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { FormationsModule } from './modules/formations/formations.module';
 import { SpeciesModule } from './modules/species/species.module';
 import { HealthModule } from './modules/health/health.module';
+import { RnaOperationsModule } from './modules/rna-operations/rna-operations.module';
 import appConfig from './config/app.config';
 
 @Module({
@@ -36,6 +37,7 @@ import appConfig from './config/app.config';
     FormationsModule,
     SpeciesModule,
     HealthModule,
+    RnaOperationsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
