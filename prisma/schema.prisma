@@ -332,7 +332,7 @@ model RnaOperation {
   id            String      @id @default(uuid())
   localId       String?     @unique
   parcelId      String
-  parcel        Parcel      @relation(fields: [parcelId], references: [id])
+  parcel        Parcel      @relation(fields: [parcelId], references: [id], onDelete: Cascade)
   userId        String
   user          User        @relation(fields: [userId], references: [id])
   category      RnaCategory
@@ -344,7 +344,7 @@ model RnaOperation {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  @@index([parcelId])
+  @@index([parcelId, year, month])
   @@index([userId])
   @@map("rna_operations")
 }

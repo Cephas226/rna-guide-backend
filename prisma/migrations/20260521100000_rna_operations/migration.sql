@@ -21,12 +21,12 @@ CREATE TABLE "rna_operations" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "rna_operations_localId_key" ON "rna_operations"("localId");
-CREATE INDEX "rna_operations_parcelId_idx" ON "rna_operations"("parcelId");
+CREATE INDEX "rna_operations_parcelId_year_month_idx" ON "rna_operations"("parcelId", "year", "month");
 CREATE INDEX "rna_operations_userId_idx" ON "rna_operations"("userId");
 
 -- AddForeignKey
 ALTER TABLE "rna_operations" ADD CONSTRAINT "rna_operations_parcelId_fkey"
-  FOREIGN KEY ("parcelId") REFERENCES "parcels"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+  FOREIGN KEY ("parcelId") REFERENCES "parcels"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "rna_operations" ADD CONSTRAINT "rna_operations_userId_fkey"
   FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
