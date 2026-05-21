@@ -11,7 +11,7 @@ import { SyncStatus, ConflictResolution, SyncAction, Prisma } from '@prisma/clie
 // ── Types ─────────────────────────────────────────────────────
 
 export interface SyncPushItem {
-  entityType: 'parcel' | 'inventory' | 'exploitation' | 'photo';
+  entityType: 'parcel' | 'inventory' | 'exploitation' | 'photo' | 'rna_operation';
   action: 'create' | 'update' | 'delete';
   localId: string;     // ID généré côté mobile
   serverId?: string;   // ID serveur si connu
@@ -120,7 +120,7 @@ export class SyncService {
     const entityTypes = dto.entityTypes ?? ['parcel', 'inventory', 'exploitation', 'photo'];
 
     // Récupérer uniquement les entités modifiées depuis lastSyncAt
-    const [parcels, inventories, exploitations, formations, species] = await Promise.all([
+    const [parcels, inventories, exploitations, formations, species, rnaOperations] = await Promise.all([
       entityTypes.includes('parcel')
         ? this.prisma.parcel.findMany({
             where: {
@@ -154,6 +154,15 @@ export class SyncService {
 
       // Espèces: catalogue de référence, synchronisé en entier à chaque pull initial
       this.prisma.species.findMany({ orderBy: { scientificName: 'asc' } }),
+
+      // Opérations RNA (entretien + CES/DRS)
+      this.prisma.rnaOperation.findMany({
+        where: {
+          updatedAt: { gte: since },
+          syncStatus: { not: SyncStatus.DELETED },
+        },
+        orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      }),
     ]);
 
     // Collect referenced user IDs across all entity types
@@ -193,6 +202,7 @@ export class SyncService {
         exploitations,
         formations,
         species,
+        rnaOperations,
       },
       counts: {
         users: users.length,
@@ -201,6 +211,7 @@ export class SyncService {
         exploitations: exploitations.length,
         formations: formations.length,
         species: species.length,
+        rnaOperations: rnaOperations.length,
       },
     };
   }
@@ -442,10 +453,71 @@ export class SyncService {
           data: { syncStatus: SyncStatus.DELETED },
         }),
       },
+
+      rna_operation: {
+        findByLocalId: (localId) =>
+          this.prisma.rnaOperation.findUnique({ where: { localId } }),
+        findById: (id) =>
+          this.prisma.rnaOperation.findUnique({ where: { id } }),
+        create: (payload, userId) =>
+          this.prisma.rnaOperation.create({
+            data: {
+              localId: payload.localId,
+              parcelId: payload.parcelId,
+              userId,
+              category: payload.category,
+              operationType: payload.operationType,
+              month: Number(payload.month),
+              year: Number(payload.year),
+              notes: payload.notes,
+              syncStatus: SyncStatus.SYNCED,
+            },
+          }),
+        update: (id, payload) =>
+          this.prisma.rnaOperation.update({
+            where: { id },
+            data: {
+              operationType: payload.operationType,
+              month: payload.month ? Number(payload.month) : undefined,
+              year: payload.year ? Number(payload.year) : undefined,
+              notes: payload.notes,
+              syncStatus: SyncStatus.SYNCED,
+            },
+          }),
+        softDelete: (id) =>
+          this.prisma.rnaOperation.update({
+            where: { id },
+            data: { syncStatus: SyncStatus.DELETED },
+          }),
+      },
     };
 
     const handler = handlers[entityType];
     if (!handler) throw new BadRequestException(`Type d'entité inconnu: ${entityType}`);
     return handler;
+  }
+
+  // ── Mise à jour du serverId côté mobile ───────────────────
+
+  async _updateEntityServerId(
+    entityType: string,
+    localId: string,
+    serverId: string,
+  ): Promise<void> {
+    const tableMap: Record<string, string> = {
+      'parcel': 'parcels',
+      'inventory': 'inventories',
+      'exploitation': 'exploitations',
+      'photo': 'photos',
+      'rna_operation': 'rna_operations',
+    };
+
+    const table = tableMap[entityType];
+    if (!table) throw new BadRequestException(`Type d'entité inconnu: ${entityType}`);
+
+    await (this.prisma as any)[table.replace(/_([a-z])/g, (_, c) => c.toUpperCase())].update({
+      where: { localId },
+      data: { id: serverId },
+    });
   }
 }
