@@ -17,8 +17,8 @@ export class RnaOperationsController {
 
   @Get('parcel/:parcelId')
   @ApiOperation({ summary: 'Lister les opérations RNA d\'une parcelle' })
-  findByParcel(@Param('parcelId') parcelId: string) {
-    return this.service.findByParcel(parcelId);
+  findByParcel(@Param('parcelId') parcelId: string, @CurrentUser() user: any) {
+    return this.service.findByParcel(parcelId, user.id, user.role);
   }
 
   @Post()
@@ -30,7 +30,7 @@ export class RnaOperationsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer (soft) une opération RNA' })
-  remove(@Param('id') id: string) {
-    return this.service.delete(id);
+  remove(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.service.delete(id, user.id, user.role);
   }
 }
