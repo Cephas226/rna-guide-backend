@@ -43,12 +43,6 @@ enum ProductType {
   COMBUSTIBLE
 }
 
-enum HealthState {
-  BON
-  MOYEN
-  MAUVAIS
-}
-
 enum Season {
   HIVERNAGE
   SAISON_SECHE
@@ -278,17 +272,17 @@ model Inventory {
 }
 
 model InventorySpecies {
-  id            String      @id @default(uuid())
+  id            String    @id @default(uuid())
   inventoryId   String
-  inventory     Inventory   @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  inventory     Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   speciesId     String
-  species       Species     @relation(fields: [speciesId], references: [id])
-  totalPieds    Int
-  selectedPieds Int         // pieds sélectionnés RNA
-  healthState   HealthState @default(BON)
-  heightCm      Float?      // hauteur moyenne en cm
+  species       Species   @relation(fields: [speciesId], references: [id])
+  piedsH1       Int       @default(0)
+  piedsH2       Int       @default(0)
+  piedsH3       Int       @default(0)
+  totalPieds    Int       @default(0)
+  selectedPieds Int       @default(0)
   notes         String?
-  isNewSpecies  Boolean     @default(false) // espèce nouvellement observée
 
   @@unique([inventoryId, speciesId])
   @@map("inventory_species")

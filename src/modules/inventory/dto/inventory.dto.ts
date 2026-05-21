@@ -4,50 +4,43 @@
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
-  IsString, IsNumber, IsOptional, IsEnum, IsArray,
+  IsString, IsOptional, IsEnum, IsArray,
   IsBoolean, IsUUID, Min, Max, ValidateNested, IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Season, HealthState } from '@prisma/client';
+import { Season } from '@prisma/client';
 
 // ── Relevé d'une espèce ───────────────────────────────────────
 
 export class CreateInventorySpeciesDto {
-  @ApiProperty({ description: 'ID de l\'espèce RNA' })
+  @ApiProperty({ description: "ID de l'espèce RNA" })
   @IsUUID()
   speciesId: string;
 
-  @ApiProperty({ example: 45, description: 'Nombre total de pieds observés' })
+  @ApiProperty({ example: 2, description: 'Nombre de pieds h ≤ 1m' })
   @IsInt()
   @Min(0)
-  totalPieds: number;
+  piedsH1: number;
 
-  @ApiProperty({ example: 18, description: 'Nombre de pieds sélectionnés RNA' })
+  @ApiProperty({ example: 3, description: 'Nombre de pieds 1m < h ≤ 2m' })
+  @IsInt()
+  @Min(0)
+  piedsH2: number;
+
+  @ApiProperty({ example: 1, description: 'Nombre de pieds h > 2m' })
+  @IsInt()
+  @Min(0)
+  piedsH3: number;
+
+  @ApiProperty({ example: 4, description: 'Nombre de pieds sélectionnés RNA' })
   @IsInt()
   @Min(0)
   selectedPieds: number;
-
-  @ApiPropertyOptional({ enum: HealthState, default: HealthState.BON })
-  @IsEnum(HealthState)
-  @IsOptional()
-  healthState?: HealthState;
-
-  @ApiPropertyOptional({ example: 185.5, description: 'Hauteur moyenne en cm' })
-  @IsNumber()
-  @Min(0)
-  @Max(3000)
-  @IsOptional()
-  heightCm?: number;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   notes?: string;
-
-  @ApiPropertyOptional({ example: false, description: 'Espèce nouvellement observée sur cette parcelle' })
-  @IsBoolean()
-  @IsOptional()
-  isNewSpecies?: boolean;
 }
 
 // ── Créer un inventaire ───────────────────────────────────────

@@ -65,7 +65,7 @@ let SyncService = SyncService_1 = class SyncService {
     async pull(dto, userId) {
         const since = dto.lastSyncAt ? new Date(dto.lastSyncAt) : new Date(0);
         const entityTypes = dto.entityTypes ?? ['parcel', 'inventory', 'exploitation', 'photo'];
-        const [parcels, inventories, exploitations, formations] = await Promise.all([
+        const [parcels, inventories, exploitations, formations, species] = await Promise.all([
             entityTypes.includes('parcel')
                 ? this.prisma.parcel.findMany({
                     where: {
@@ -92,6 +92,7 @@ let SyncService = SyncService_1 = class SyncService {
                 where: { updatedAt: { gte: since }, isPublished: true },
                 orderBy: { orderIndex: 'asc' },
             }),
+            this.prisma.species.findMany({ orderBy: { scientificName: 'asc' } }),
         ]);
         const userIds = new Set();
         parcels.forEach(p => p.ownerId && userIds.add(p.ownerId));
@@ -126,6 +127,7 @@ let SyncService = SyncService_1 = class SyncService {
                 inventories,
                 exploitations,
                 formations,
+                species,
             },
             counts: {
                 users: users.length,
@@ -133,6 +135,7 @@ let SyncService = SyncService_1 = class SyncService {
                 inventories: inventories.length,
                 exploitations: exploitations.length,
                 formations: formations.length,
+                species: species.length,
             },
         };
     }

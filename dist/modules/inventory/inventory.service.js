@@ -35,11 +35,12 @@ let InventoryService = InventoryService_1 = class InventoryService {
             if (missing.length)
                 throw new common_1.BadRequestException(`Espèces introuvables: ${missing.join(', ')}`);
             for (const sp of dto.species) {
-                if (sp.selectedPieds > sp.totalPieds)
-                    throw new common_1.BadRequestException(`Espèce ${sp.speciesId}: pieds sélectionnés (${sp.selectedPieds}) > total (${sp.totalPieds})`);
+                const total = sp.piedsH1 + sp.piedsH2 + sp.piedsH3;
+                if (sp.selectedPieds > total)
+                    throw new common_1.BadRequestException(`Espèce ${sp.speciesId}: pieds sélectionnés (${sp.selectedPieds}) > total (${total})`);
             }
         }
-        const totalPieds = dto.species?.reduce((s, sp) => s + sp.totalPieds, 0) ?? 0;
+        const totalPieds = dto.species?.reduce((s, sp) => s + sp.piedsH1 + sp.piedsH2 + sp.piedsH3, 0) ?? 0;
         const selectedPieds = dto.species?.reduce((s, sp) => s + sp.selectedPieds, 0) ?? 0;
         const inventory = await this.prisma.inventory.create({
             data: {
@@ -52,7 +53,17 @@ let InventoryService = InventoryService_1 = class InventoryService {
                 selectedPieds,
                 observations: dto.observations,
                 syncStatus: client_1.SyncStatus.SYNCED,
-                species: dto.species?.length ? { create: dto.species.map(sp => ({ ...sp })) } : undefined,
+                species: dto.species?.length ? {
+                    create: dto.species.map(sp => ({
+                        speciesId: sp.speciesId,
+                        piedsH1: sp.piedsH1,
+                        piedsH2: sp.piedsH2,
+                        piedsH3: sp.piedsH3,
+                        totalPieds: sp.piedsH1 + sp.piedsH2 + sp.piedsH3,
+                        selectedPieds: sp.selectedPieds,
+                        notes: sp.notes,
+                    }))
+                } : undefined,
             },
             include: {
                 species: { include: { species: true } },
@@ -138,14 +149,26 @@ let InventoryService = InventoryService_1 = class InventoryService {
         let updateData = { ...(dto.observations !== undefined && { observations: dto.observations }), version: { increment: 1 } };
         if (dto.species?.length) {
             for (const sp of dto.species) {
-                if (sp.selectedPieds > sp.totalPieds)
+                const total = sp.piedsH1 + sp.piedsH2 + sp.piedsH3;
+                if (sp.selectedPieds > total)
                     throw new common_1.BadRequestException(`Espèce ${sp.speciesId}: pieds sélectionnés > total`);
             }
             updateData = {
                 ...updateData,
-                totalPieds: dto.species.reduce((s, sp) => s + sp.totalPieds, 0),
+                totalPieds: dto.species.reduce((s, sp) => s + sp.piedsH1 + sp.piedsH2 + sp.piedsH3, 0),
                 selectedPieds: dto.species.reduce((s, sp) => s + sp.selectedPieds, 0),
-                species: { deleteMany: {}, create: dto.species.map(sp => ({ ...sp })) },
+                species: {
+                    deleteMany: {},
+                    create: dto.species.map(sp => ({
+                        speciesId: sp.speciesId,
+                        piedsH1: sp.piedsH1,
+                        piedsH2: sp.piedsH2,
+                        piedsH3: sp.piedsH3,
+                        totalPieds: sp.piedsH1 + sp.piedsH2 + sp.piedsH3,
+                        selectedPieds: sp.selectedPieds,
+                        notes: sp.notes,
+                    })),
+                },
             };
         }
         return this.prisma.inventory.update({

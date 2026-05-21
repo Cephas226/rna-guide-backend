@@ -120,7 +120,7 @@ export class SyncService {
     const entityTypes = dto.entityTypes ?? ['parcel', 'inventory', 'exploitation', 'photo'];
 
     // Récupérer uniquement les entités modifiées depuis lastSyncAt
-    const [parcels, inventories, exploitations, formations] = await Promise.all([
+    const [parcels, inventories, exploitations, formations, species] = await Promise.all([
       entityTypes.includes('parcel')
         ? this.prisma.parcel.findMany({
             where: {
@@ -151,6 +151,9 @@ export class SyncService {
         where: { updatedAt: { gte: since }, isPublished: true },
         orderBy: { orderIndex: 'asc' },
       }),
+
+      // Espèces: catalogue de référence, synchronisé en entier à chaque pull initial
+      this.prisma.species.findMany({ orderBy: { scientificName: 'asc' } }),
     ]);
 
     // Collect referenced user IDs across all entity types
@@ -189,6 +192,7 @@ export class SyncService {
         inventories,
         exploitations,
         formations,
+        species,
       },
       counts: {
         users: users.length,
@@ -196,6 +200,7 @@ export class SyncService {
         inventories: inventories.length,
         exploitations: exploitations.length,
         formations: formations.length,
+        species: species.length,
       },
     };
   }

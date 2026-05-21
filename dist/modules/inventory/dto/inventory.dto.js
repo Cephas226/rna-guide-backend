@@ -18,48 +18,40 @@ class CreateInventorySpeciesDto {
 }
 exports.CreateInventorySpeciesDto = CreateInventorySpeciesDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'ID de l\'espèce RNA' }),
+    (0, swagger_1.ApiProperty)({ description: "ID de l'espèce RNA" }),
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateInventorySpeciesDto.prototype, "speciesId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 45, description: 'Nombre total de pieds observés' }),
+    (0, swagger_1.ApiProperty)({ example: 2, description: 'Nombre de pieds h ≤ 1m' }),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
-], CreateInventorySpeciesDto.prototype, "totalPieds", void 0);
+], CreateInventorySpeciesDto.prototype, "piedsH1", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 18, description: 'Nombre de pieds sélectionnés RNA' }),
+    (0, swagger_1.ApiProperty)({ example: 3, description: 'Nombre de pieds 1m < h ≤ 2m' }),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateInventorySpeciesDto.prototype, "piedsH2", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 1, description: 'Nombre de pieds h > 2m' }),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateInventorySpeciesDto.prototype, "piedsH3", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 4, description: 'Nombre de pieds sélectionnés RNA' }),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateInventorySpeciesDto.prototype, "selectedPieds", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.HealthState, default: client_1.HealthState.BON }),
-    (0, class_validator_1.IsEnum)(client_1.HealthState),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreateInventorySpeciesDto.prototype, "healthState", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 185.5, description: 'Hauteur moyenne en cm' }),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
-    (0, class_validator_1.Max)(3000),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Number)
-], CreateInventorySpeciesDto.prototype, "heightCm", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateInventorySpeciesDto.prototype, "notes", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: false, description: 'Espèce nouvellement observée sur cette parcelle' }),
-    (0, class_validator_1.IsBoolean)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Boolean)
-], CreateInventorySpeciesDto.prototype, "isNewSpecies", void 0);
 class CreateInventoryDto {
 }
 exports.CreateInventoryDto = CreateInventoryDto;

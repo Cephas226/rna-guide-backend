@@ -6,10 +6,15 @@ export declare class InventoryService {
     constructor(prisma: PrismaService);
     create(dto: CreateInventoryDto, userId: string): Promise<{
         parcel: {
-            name: string;
+            id: string;
             region: string;
             village: string;
+            name: string;
+        };
+        agent: {
             id: string;
+            firstName: string;
+            lastName: string;
         };
         species: ({
             species: {
@@ -29,70 +34,65 @@ export declare class InventoryService {
             };
         } & {
             id: string;
-            notes: string | null;
-            speciesId: string;
             totalPieds: number;
             selectedPieds: number;
-            healthState: import(".prisma/client").$Enums.HealthState;
-            heightCm: number | null;
-            isNewSpecies: boolean;
+            piedsH1: number;
+            piedsH2: number;
+            piedsH3: number;
+            notes: string | null;
+            speciesId: string;
             inventoryId: string;
         })[];
-        agent: {
-            firstName: string;
-            lastName: string;
-            id: string;
-        };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         localId: string | null;
-        syncStatus: import(".prisma/client").$Enums.SyncStatus;
-        version: number;
         year: number;
+        season: import(".prisma/client").$Enums.Season;
         totalPieds: number;
         selectedPieds: number;
-        parcelId: string;
-        season: import(".prisma/client").$Enums.Season;
+        syncStatus: import(".prisma/client").$Enums.SyncStatus;
+        version: number;
         observations: string | null;
-        agentId: string;
         validatedAt: Date | null;
         validatedBy: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        parcelId: string;
+        agentId: string;
     }>;
     findAll(query: QueryInventoryDto, user: any): Promise<{
         data: ({
             parcel: {
-                name: string;
+                id: string;
                 region: string;
                 village: string;
-                id: string;
+                name: string;
                 superficie: number;
+            };
+            agent: {
+                id: string;
+                firstName: string;
+                lastName: string;
             };
             _count: {
                 species: number;
             };
-            agent: {
-                firstName: string;
-                lastName: string;
-                id: string;
-            };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             localId: string | null;
-            syncStatus: import(".prisma/client").$Enums.SyncStatus;
-            version: number;
             year: number;
+            season: import(".prisma/client").$Enums.Season;
             totalPieds: number;
             selectedPieds: number;
-            parcelId: string;
-            season: import(".prisma/client").$Enums.Season;
+            syncStatus: import(".prisma/client").$Enums.SyncStatus;
+            version: number;
             observations: string | null;
-            agentId: string;
             validatedAt: Date | null;
             validatedBy: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            parcelId: string;
+            agentId: string;
         })[];
         pagination: {
             total: number;
@@ -103,6 +103,11 @@ export declare class InventoryService {
         };
     }>;
     findByParcel(parcelId: string, year?: number, user?: any): Promise<({
+        agent: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
         species: ({
             species: {
                 id: string;
@@ -113,46 +118,46 @@ export declare class InventoryService {
             };
         } & {
             id: string;
-            notes: string | null;
-            speciesId: string;
             totalPieds: number;
             selectedPieds: number;
-            healthState: import(".prisma/client").$Enums.HealthState;
-            heightCm: number | null;
-            isNewSpecies: boolean;
+            piedsH1: number;
+            piedsH2: number;
+            piedsH3: number;
+            notes: string | null;
+            speciesId: string;
             inventoryId: string;
         })[];
-        agent: {
-            firstName: string;
-            lastName: string;
-            id: string;
-        };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         localId: string | null;
-        syncStatus: import(".prisma/client").$Enums.SyncStatus;
-        version: number;
         year: number;
+        season: import(".prisma/client").$Enums.Season;
         totalPieds: number;
         selectedPieds: number;
-        parcelId: string;
-        season: import(".prisma/client").$Enums.Season;
+        syncStatus: import(".prisma/client").$Enums.SyncStatus;
+        version: number;
         observations: string | null;
-        agentId: string;
         validatedAt: Date | null;
         validatedBy: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        parcelId: string;
+        agentId: string;
     })[]>;
     findOne(id: string, user: any): Promise<{
         parcel: {
-            name: string;
+            id: string;
             region: string;
             village: string;
-            id: string;
+            name: string;
             superficie: number;
             ownerId: string;
         };
+        agent: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
         species: ({
             species: {
                 id: string;
@@ -171,38 +176,38 @@ export declare class InventoryService {
             };
         } & {
             id: string;
-            notes: string | null;
-            speciesId: string;
             totalPieds: number;
             selectedPieds: number;
-            healthState: import(".prisma/client").$Enums.HealthState;
-            heightCm: number | null;
-            isNewSpecies: boolean;
+            piedsH1: number;
+            piedsH2: number;
+            piedsH3: number;
+            notes: string | null;
+            speciesId: string;
             inventoryId: string;
         })[];
-        agent: {
-            firstName: string;
-            lastName: string;
-            id: string;
-        };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         localId: string | null;
-        syncStatus: import(".prisma/client").$Enums.SyncStatus;
-        version: number;
         year: number;
+        season: import(".prisma/client").$Enums.Season;
         totalPieds: number;
         selectedPieds: number;
-        parcelId: string;
-        season: import(".prisma/client").$Enums.Season;
+        syncStatus: import(".prisma/client").$Enums.SyncStatus;
+        version: number;
         observations: string | null;
-        agentId: string;
         validatedAt: Date | null;
         validatedBy: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        parcelId: string;
+        agentId: string;
     }>;
     update(id: string, dto: UpdateInventoryDto, user: any): Promise<{
+        agent: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
         species: ({
             species: {
                 id: string;
@@ -221,36 +226,31 @@ export declare class InventoryService {
             };
         } & {
             id: string;
-            notes: string | null;
-            speciesId: string;
             totalPieds: number;
             selectedPieds: number;
-            healthState: import(".prisma/client").$Enums.HealthState;
-            heightCm: number | null;
-            isNewSpecies: boolean;
+            piedsH1: number;
+            piedsH2: number;
+            piedsH3: number;
+            notes: string | null;
+            speciesId: string;
             inventoryId: string;
         })[];
-        agent: {
-            firstName: string;
-            lastName: string;
-            id: string;
-        };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         localId: string | null;
-        syncStatus: import(".prisma/client").$Enums.SyncStatus;
-        version: number;
         year: number;
+        season: import(".prisma/client").$Enums.Season;
         totalPieds: number;
         selectedPieds: number;
-        parcelId: string;
-        season: import(".prisma/client").$Enums.Season;
+        syncStatus: import(".prisma/client").$Enums.SyncStatus;
+        version: number;
         observations: string | null;
-        agentId: string;
         validatedAt: Date | null;
         validatedBy: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        parcelId: string;
+        agentId: string;
     }>;
     validate(id: string, validatorId: string): Promise<{
         parcel: {
@@ -262,37 +262,37 @@ export declare class InventoryService {
         };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         localId: string | null;
-        syncStatus: import(".prisma/client").$Enums.SyncStatus;
-        version: number;
         year: number;
+        season: import(".prisma/client").$Enums.Season;
         totalPieds: number;
         selectedPieds: number;
-        parcelId: string;
-        season: import(".prisma/client").$Enums.Season;
+        syncStatus: import(".prisma/client").$Enums.SyncStatus;
+        version: number;
         observations: string | null;
-        agentId: string;
         validatedAt: Date | null;
         validatedBy: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        parcelId: string;
+        agentId: string;
     }>;
     invalidate(id: string): Promise<{
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         localId: string | null;
-        syncStatus: import(".prisma/client").$Enums.SyncStatus;
-        version: number;
         year: number;
+        season: import(".prisma/client").$Enums.Season;
         totalPieds: number;
         selectedPieds: number;
-        parcelId: string;
-        season: import(".prisma/client").$Enums.Season;
+        syncStatus: import(".prisma/client").$Enums.SyncStatus;
+        version: number;
         observations: string | null;
-        agentId: string;
         validatedAt: Date | null;
         validatedBy: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        parcelId: string;
+        agentId: string;
     }>;
     remove(id: string, user: any): Promise<void>;
     getStats(parcelId: string): Promise<{

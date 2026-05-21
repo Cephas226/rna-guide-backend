@@ -1,12 +1,11 @@
-import { Season, HealthState } from '@prisma/client';
+import { Season } from '@prisma/client';
 export declare class CreateInventorySpeciesDto {
     speciesId: string;
-    totalPieds: number;
+    piedsH1: number;
+    piedsH2: number;
+    piedsH3: number;
     selectedPieds: number;
-    healthState?: HealthState;
-    heightCm?: number;
     notes?: string;
-    isNewSpecies?: boolean;
 }
 export declare class CreateInventoryDto {
     localId?: string;
