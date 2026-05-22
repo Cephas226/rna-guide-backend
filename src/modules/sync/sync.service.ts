@@ -117,7 +117,7 @@ export class SyncService {
 
   async pull(dto: SyncPullDto, userId: string): Promise<any> {
     const since = dto.lastSyncAt ? new Date(dto.lastSyncAt) : new Date(0);
-    const entityTypes = dto.entityTypes ?? ['parcel', 'inventory', 'exploitation', 'photo'];
+    const entityTypes = dto.entityTypes ?? ['parcel', 'inventory', 'exploitation', 'photo', 'rna_operation'];
 
     // Récupérer uniquement les entités modifiées depuis lastSyncAt
     const [parcels, inventories, exploitations, formations, species, rnaOperations] = await Promise.all([
@@ -156,13 +156,15 @@ export class SyncService {
       this.prisma.species.findMany({ orderBy: { scientificName: 'asc' } }),
 
       // Opérations RNA (entretien + CES/DRS)
-      this.prisma.rnaOperation.findMany({
-        where: {
-          updatedAt: { gte: since },
-          syncStatus: { not: SyncStatus.DELETED },
-        },
-        orderBy: [{ year: 'desc' }, { month: 'desc' }],
-      }),
+      entityTypes.includes('rna_operation')
+        ? this.prisma.rnaOperation.findMany({
+            where: {
+              updatedAt: { gte: since },
+              syncStatus: { not: SyncStatus.DELETED },
+            },
+            orderBy: [{ year: 'desc' }, { month: 'desc' }],
+          })
+        : [],
     ]);
 
     // Collect referenced user IDs across all entity types
@@ -467,8 +469,8 @@ export class SyncService {
               userId,
               category: payload.category,
               operationType: payload.operationType,
-              month: Number(payload.month),
-              year: Number(payload.year),
+              month: Number(payload.month) || 1,
+              year: Number(payload.year) || new Date().getFullYear(),
               notes: payload.notes,
               syncStatus: SyncStatus.SYNCED,
             },
@@ -477,6 +479,7 @@ export class SyncService {
           this.prisma.rnaOperation.update({
             where: { id },
             data: {
+              category: payload.category,
               operationType: payload.operationType,
               month: payload.month ? Number(payload.month) : undefined,
               year: payload.year ? Number(payload.year) : undefined,
